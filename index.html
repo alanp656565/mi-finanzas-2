@@ -9,7 +9,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       background: #0d0e12;
       color: #fff;
       padding: 16px;
@@ -25,7 +25,8 @@
     }
     input { background: #2a2b36; color: #fff; }
     button { background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
-    .eliminar { background: #dc2626; }
+    .verde { background: #16a34a; }
+    .rojo { background: #dc2626; }
     .ingreso { color: #4ade80; }
     .gasto { color: #f87171; }
     .oculto { display: none !important; }
@@ -38,14 +39,14 @@
     <h2 style="text-align:center">Iniciar Sesión / Registrarse</h2>
     <input type="email" id="correo" placeholder="Tu correo electrónico">
     <input type="password" id="clave" placeholder="Contraseña (mínimo 6 caracteres)">
-    <button onclick="doSignup()">Crear Cuenta</button>
-    <button onclick="doLogin()">Entrar</button>
+    <button class="verde" onclick="registrar()">Crear Cuenta</button>
+    <button onclick="entrar()">Entrar</button>
   </div>
 
   <div id="app" class="oculto">
     <div style="text-align:right; margin-bottom:10px;">
-      <span id="correoUsuario" style="color:#94a3b8; font-size:14px;"></span>
-      <button onclick="doLogout()" style="width:auto; padding:8px 12px; margin-left:8px; background:#4b5563;">Salir</button>
+      <span id="emailActivo" style="color:#94a3b8; font-size:14px;"></span>
+      <button class="rojo" onclick="salir()" style="width:auto; padding:8px 12px; margin-left:8px;">Salir</button>
     </div>
 
     <div class="card">
@@ -56,8 +57,8 @@
     <div class="card">
       <h2>Agregar Movimiento</h2>
       <input type="text" id="descripcion" placeholder="Descripción">
-      <input type="number" id="monto" placeholder="Ej: 500 o -50" step="0.01">
-      <button onclick="agregarMovimiento()">Guardar</button>
+      <input type="number" id="monto" placeholder="Ej: 500 = ingreso / -50 = gasto" step="0.01">
+      <button onclick="guardarMovimiento()">Guardar</button>
     </div>
 
     <div class="card">
@@ -75,72 +76,73 @@
 const SUPABASE_URL = "https://inlvymeimjjzqebwzdsd.supabase.co";
 const SUPABASE_CLAVE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubHZteWVpbWlqenFlYnd6ZHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MTYxOTMsImV4cCI6MjEwODM5MjE5M30.EJ8oEUp0IQx1vz7V4-69k_qWTQSiwd1i98XNgRULzOo";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE);
-let usuarioActivo = null;
-let miGrafica = null;
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_CLAVE);
+let usuario = null;
+let grafica = null;
 
-comprobarSesion();
+verificarSesion();
 
-async function comprobarSesion() {
+async function verificarSesion() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    usuarioActivo = session.user;
-    mostrarPantallaApp();
+    usuario = session.user;
+    mostrarApp();
   }
 }
 
-async function doSignup() {
+async function registrar() {
   const correo = document.getElementById('correo').value;
   const clave = document.getElementById('clave').value;
   if (clave.length < 6) return alert('⚠️ La contraseña debe tener al menos 6 caracteres');
   
   const { error } = await supabase.auth.signUp({ email: correo, password: clave });
   if (error) return alert('Error: ' + error.message);
-  alert('✅ Cuenta creada. Ahora pulsa "Entrar"');
+  alert('✅ Cuenta creada. Pulsa "Entrar" para acceder');
 }
 
-async function doLogin() {
+async function entrar() {
   const correo = document.getElementById('correo').value;
   const clave = document.getElementById('clave').value;
   
   const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password: clave });
   if (error) return alert('Error: ' + error.message);
   
-  usuarioActivo = data.user;
-  mostrarPantallaApp();
+  usuario = data.user;
+  mostrarApp();
 }
 
-async function doLogout() {
+async function salir() {
   await supabase.auth.signOut();
-  usuarioActivo = null;
+  usuario = null;
   document.getElementById('login').classList.remove('oculto');
   document.getElementById('app').classList.add('oculto');
   document.getElementById('correo').value = '';
   document.getElementById('clave').value = '';
 }
 
-function mostrarPantallaApp() {
+function mostrarApp() {
   document.getElementById('login').classList.add('oculto');
   document.getElementById('app').classList.remove('oculto');
-  document.getElementById('correoUsuario').textContent = usuarioActivo.email;
-  cargarLista();
+  document.getElementById('emailActivo').textContent = usuario.email;
+  cargarMovimientos();
 }
 
-async function cargarLista() {
+async function cargarMovimientos() {
   const { data, error } = await supabase
     .from('finanzas')
     .select('*')
     .order('creado_en', { ascending: false });
   
   if (error) return console.error(error);
-  const movimientos = data || [];
+  const lista = data || [];
 
-  const total = movimientos.reduce((sum, m) => sum + m.monto, 0);
+  const total = lista.reduce((s, m) => s + m.monto, 0);
   document.getElementById('saldo').textContent = '$' + total.toFixed(2);
 
-  const lista = document.getElementById('lista');
-  lista.innerHTML = '';
-  movimientos.forEach(m => {
+  const contenedor = document.getElementById('lista');
+  contenedor.innerHTML = '';
+  lista.forEach(m => {
     const div = document.createElement('div');
     div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #333;';
     div.innerHTML = `
@@ -150,16 +152,16 @@ async function cargarLista() {
           ${m.monto >= 0 ? '+' : ''}$${m.monto.toFixed(2)}
         </div>
       </div>
-      <button onclick="eliminarMovimiento(${m.id})" class="eliminar" style="width:auto; padding:6px 12px;">✕</button>
+      <button class="rojo" onclick="borrar(${m.id})" style="width:auto; padding:6px 12px;">✕</button>
     `;
-    lista.appendChild(div);
+    contenedor.appendChild(div);
   });
 
-  const ingresos = movimientos.filter(m => m.monto > 0).reduce((s, m) => s + m.monto, 0);
-  const gastos = Math.abs(movimientos.filter(m => m.monto < 0).reduce((s, m) => s + m.monto, 0));
+  const ingresos = lista.filter(m => m.monto > 0).reduce((s, m) => s + m.monto, 0);
+  const gastos = Math.abs(lista.filter(m => m.monto < 0).reduce((s, m) => s + m.monto, 0));
   
-  if (miGrafica) miGrafica.destroy();
-  miGrafica = new Chart(document.getElementById('grafica'), {
+  if (grafica) grafica.destroy();
+  grafica = new Chart(document.getElementById('grafica'), {
     type: 'doughnut',
     data: {
       labels: ['Ingresos', 'Gastos'],
@@ -171,7 +173,7 @@ async function cargarLista() {
   });
 }
 
-async function agregarMovimiento() {
+async function guardarMovimiento() {
   const desc = document.getElementById('descripcion').value.trim();
   const monto = parseFloat(document.getElementById('monto').value);
   if (!desc || isNaN(monto)) return alert('⚠️ Completa todos los campos');
@@ -179,21 +181,21 @@ async function agregarMovimiento() {
   const { error } = await supabase.from('finanzas').insert([{
     descripcion: desc,
     monto: monto,
-    usuario_id: usuarioActivo.id
+    usuario_id: usuario.id
   }]);
 
   if (error) return alert('Error: ' + error.message);
   
   document.getElementById('descripcion').value = '';
   document.getElementById('monto').value = '';
-  cargarLista();
+  cargarMovimientos();
 }
 
-async function eliminarMovimiento(id) {
+async function borrar(id) {
   if (!confirm('¿Eliminar este registro?')) return;
   const { error } = await supabase.from('finanzas').delete().eq('id', id);
   if (error) return alert('Error: ' + error.message);
-  cargarLista();
+  cargarMovimientos();
 }
 </script>
 </body>
