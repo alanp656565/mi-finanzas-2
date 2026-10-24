@@ -1,629 +1,274 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Centro Financiero Pro v2</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin:0; padding:0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #0d0e12; 
-            color: #ffffff; 
-            padding: 16px; 
-            max-width:480px;
-            margin:0 auto;
-        }
-        h2 { 
-            font-size: 15px; 
-            margin: 20px 0 10px 0; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            color: #9499a7; 
-        }
-        .seccion-patrimonio { 
-            background: linear-gradient(145deg, #191b22, #111217); 
-            border-radius: 20px; 
-            padding: 20px; 
-            border: 1px solid #2c2f3b; 
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .seccion-patrimonio:active {
-            transform: scale(0.98);
-            box-shadow: inset 0 0 0 2px #a370f7;
-        }
-        .monto-principal { 
-            font-size: 32px; 
-            font-weight: 800; 
-            margin: 4px 0; 
-            color: #00f5d4; 
-        }
-        .meta-container { 
-            margin-top: 12px; 
-            background-color: #21232c; 
-            border-radius: 8px; 
-            height: 8px; 
-            overflow: hidden; 
-        }
-        .meta-barra { 
-            background: #a370f7; 
-            width: 0%; 
-            height: 100%; 
-            transition: width 0.5s ease; 
-            box-shadow: 0 0 8px #a370f7; 
-        }
-        .contenedor-horizontal { 
-            display: flex; 
-            flex-direction: row;
-            gap: 12px; 
-            overflow-x: auto; 
-            padding-bottom: 8px; 
-        }
-        .contenedor-horizontal::-webkit-scrollbar { display: none; }
-        .tarjeta-activa { 
-            background-color: #16171d; 
-            min-width: 145px; 
-            padding: 14px; 
-            border-radius: 16px; 
-            border: 1px solid #2c2f3b; 
-            border-top: 4px solid #9499a7; 
-        }
-        .tarjeta-activa.pichincha { border-top-color: #ffdd00; }
-        .tarjeta-activa.guayaquil { border-top-color: #ff007f; }
-        .tarjeta-activa.produbanco { border-top-color: #00a86b; }
-        .tarjeta-activa.pacifico { border-top-color: #0077b6; }
-        .nombre-tag { font-size: 11px; color: #9499a7; font-weight: 600; }
-        .saldo-tag { font-size: 17px; font-weight: 700; margin-top: 4px; color: #ffffff; }
-        .btn-mini { background-color: #21232c; border: 1px solid #2c2f3b; color: white; font-size: 11px; padding:6px; border-radius: 6px; cursor: pointer; margin-top: 8px; width: 100%; font-weight: 600; }
-        .formulario-rapido { background-color: #16171d; border-radius: 20px; padding: 20px; border: 1px solid #2c2f3b; margin-top: 20px; }
-        .campo-grupo { margin-bottom: 14px; }
-        label { display: block; font-size: 12px; color: #9499a7; margin-bottom: 6px; font-weight: 600; }
-        input, select { width: 100%; background-color: #21232c; border: 1px solid #2c2f3b; color: white; padding: 12px; border-radius: 10px; font-size: 15px; outline: none; }
-        .check-grupo { display:flex; gap:8px; align-items:center; }
-        .btn-guardar { background: linear-gradient(135deg, #a370f7, #7232d9); color: white; border: none; width: 100%; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .btn-borrar-todo { background-color: #2c1818; border:1px solid #992c2c; color:#ff7878; width:100%; padding:12px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px; }
-        .tabs-navegacion { display: flex; gap: 6px; margin: 15px 0 10px 0; background-color: #16171d; padding: 4px; border-radius: 10px; }
-        .tab-boton { flex: 1; padding: 8px; border-radius: 6px; border: none; background: transparent; color: #9499a7; font-weight: 600; font-size: 12px; cursor: pointer; }
-        .tab-boton.activo { background-color: #21232c; color: white; }
-        .subpantalla-historial { display: none; background-color: #16171d; padding: 12px; border-radius: 16px; border: 1px solid #2c2f3b; max-height: 200px; overflow-y: auto; }
-        .subpantalla-historial.activa { display: block; }
-        .grafico-caja { background-color: #16171d; border-radius: 20px; padding: 20px; border: 1px solid #2c2f3b; margin-bottom:15px; cursor:pointer; }
-        .item-historial { background-color: #21232c; padding: 10px; border-radius: 10px; margin-bottom: 6px; display: flex; flex-direction:column; font-size: 13px; }
-        .btn-eliminar { background: none; border: 1px solid #ff4444; color: #ff4444; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; margin-top:6px; align-self:flex-start; }
-        .panel-accion { background:#21232c; border-radius:12px; padding:12px; margin:10px 0; }
-        .oculto { display:none; }
-        .mensaje-aviso { font-size:12px; margin-top:8px; color:#00f5d4; }
-        .mensaje-alerta { font-size:12px; margin-top:8px; color:#ff7878; }
-        canvas { width:100% !important; }
-        .pantalla-resumen-dia { position:fixed; inset:0; background:#0d0e12; z-index:99; padding:20px; overflow-y:auto; display:none; }
-        .pantalla-resumen-dia.activa { display:block; }
-        .pantalla-resumen-mes { position:fixed; inset:0; background:#0d0e12; z-index:100; padding:20px; overflow-y:auto; display:none; }
-        .pantalla-resumen-mes.activa { display:block; }
-        .pantalla-editar-meta { position:fixed; inset:0; background:#0d0e12; z-index:101; padding:20px; overflow-y:auto; display:none; }
-        .pantalla-editar-meta.activa { display:block; }
-        .btn-volver { background:#2c2f3b; color:#fff; border:none; padding:10px; border-radius:10px; margin-bottom:15px; cursor:pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Centro Financiero Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0d0e12;
+      color: #fff;
+      padding: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin: 10px 0 20px;
+      font-size: 28px;
+    }
+    h2 {
+      font-size: 15px;
+      margin: 20px 0 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .card {
+      background: #1a1b23;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    input { background: #2a2b36; color: #fff; }
+    button { background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .eliminar { background: #dc2626; }
+    .eliminar:hover { background: #b91c1c; }
+    .ingreso { color: #4ade80; }
+    .gasto { color: #f87171; }
+    .auth-section { text-align: center; margin-bottom: 20px; }
+    .datos-usuario { margin-bottom: 10px; font-size: 14px; color: #94a3b8; }
+  </style>
 </head>
 <body>
-    <div class="seccion-patrimonio" onclick="abrirEditarMeta()">
-        <div style="font-size: 12px; color: #9499a7; font-weight: 600; text-transform: uppercase;">💰 FLUJO DISPONIBLE (EFECTIVO + BANCOS)</div>
-        <div class="monto-principal" id="txt-patrimonio">$0.00</div>
-        <div style="margin-top: 10px; font-size: 11px; display: flex; justify-content: space-between;">
-            <span style="color: #9499a7;" id="nombre-meta">Mi Meta de Ahorro</span>
-            <span style="color: #a370f7; font-weight: 700;" id="valor-meta">$0.00</span>
-        </div>
-        <div class="meta-container"><div class="meta-barra" id="barra-meta"></div></div>
+
+  <h1>💰 Mis Finanzas</h1>
+  
+  <!-- Sección de Inicio de Sesión -->
+  <div class="card auth-section" id="seccion-auth">
+    <h2>Iniciar Sesión / Registrarse</h2>
+    <input type="email" id="correo" placeholder="Tu correo electrónico">
+    <input type="password" id="clave" placeholder="Contraseña">
+    <button onclick="iniciarSesion()">Entrar</button>
+    <button onclick="registrarse()" style="background: #16a34a;">Crear Cuenta</button>
+  </div>
+
+  <div class="datos-usuario" id="usuario-info" style="display:none;"></div>
+  <button id="cerrar-sesion" onclick="cerrarSesion()" style="display:none; background: #4b5563;">Cerrar Sesión</button>
+
+  <!-- Sección de Datos -->
+  <div id="seccion-datos" style="display:none;">
+    <div class="card">
+      <h2>Saldo Actual</h2>
+      <h1 id="saldo" style="font-size: 36px; margin: 10px 0;">$0.00</h1>
     </div>
-    <!-- Pantalla Editar Meta -->
-    <div class="pantalla-editar-meta" id="pantallaEditarMeta">
-        <button class="btn-volver" onclick="cerrarEditarMeta()">← Volver</button>
-        <h2 style="margin-top:0;">Editar Meta</h2>
-        <div class="formulario-rapido" style="margin-top:10px;">
-            <div class="campo-grupo">
-                <label>Nombre de la meta</label>
-                <input type="text" id="input-nombre-meta" placeholder="Ej: Meta Diciembre, Vacaciones...">
-            </div>
-            <div class="campo-grupo">
-                <label>Valor objetivo ($)</label>
-                <input type="number" step="0.01" id="input-valor-meta" placeholder="0.00">
-            </div>
-            <button class="btn-guardar" onclick="guardarMeta()">Guardar Meta</button>
-        </div>
+
+    <div class="card">
+      <h2>Agregar Movimiento</h2>
+      <input type="text" id="descripcion" placeholder="Descripción">
+      <input type="number" id="monto" placeholder="Monto (positivo = ingreso, negativo = gasto)" step="0.01">
+      <button onclick="agregarMovimiento()">Guardar</button>
     </div>
-    <h2>Cuentas de Flujo Corriente</h2>
-    <div class="contenedor-horizontal">
-        <div class="tarjeta-activa"><div class="nombre-tag">💵 Efectivo</div><div class="saldo-tag" id="banco-efectivo">$0.00</div></div>
-        <div class="tarjeta-activa pichincha"><div class="nombre-tag">Pichincha</div><div class="saldo-tag" id="banco-pichincha">$0.00</div></div>
-        <div class="tarjeta-activa guayaquil"><div class="nombre-tag">Guayaquil</div><div class="saldo-tag" id="banco-guayaquil">$0.00</div></div>
-        <div class="tarjeta-activa produbanco"><div class="nombre-tag">Produbanco</div><div class="saldo-tag" id="banco-produbanco">$0.00</div></div>
-        <div class="tarjeta-activa pacifico"><div class="nombre-tag">Pacífico</div><div class="saldo-tag" id="banco-pacifico">$0.00</div></div>
+
+    <div class="card">
+      <h2>Gráfica</h2>
+      <canvas id="grafica"></canvas>
     </div>
-    <h2>Tarjetas (Crédito Standby)</h2>
-    <div class="contenedor-horizontal">
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">💳 Tarjeta 1</div><div class="saldo-tag" id="txt-tc1">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelPago('tc1')">Pagar</button>
-        </div>
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">💳 Tarjeta 2</div><div class="saldo-tag" id="txt-tc2">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelPago('tc2')">Pagar</button>
-        </div>
+
+    <div class="card">
+      <h2>Historial</h2>
+      <div id="lista"></div>
     </div>
-    <div id="panelPagoTarjeta" class="panel-accion oculto">
-        <h3 style="margin-bottom:10px;font-size:14px;">Pagar Tarjeta</h3>
-        <input type="hidden" id="tarjetaSeleccionada">
-        <div class="campo-grupo">
-            <label>Selecciona banco origen</label>
-            <select id="bancoPagoSelect">
-                <option value="efectivo">Efectivo</option>
-                <option value="pichincha">Pichincha</option>
-                <option value="guayaquil">Guayaquil</option>
-                <option value="produbanco">Produbanco</option>
-                <option value="pacifico">Pacífico</option>
-            </select>
+  </div>
+
+<script>
+// TUS CLAVES YA CONFIGURADAS ✅
+const SUPABASE_URL = "https://inlvymeimjjzqebwzdsd.supabase.co";
+const SUPABASE_CLAVE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubHZteWVpbWlqenFlYnd6ZHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MTYxOTMsImV4cCI6MjEwODM5MjE5M30.EJ8oEUp0IQx1vz7V4-69k_qWTQSiwd1i98XNgRULzOo";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE);
+let usuarioActivo = null;
+let movimientos = [];
+
+// Verificar sesión al cargar
+async function verificarSesion() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    usuarioActivo = session.user;
+    mostrarApp();
+    await cargarMovimientos();
+  }
+}
+
+// Iniciar sesión
+async function iniciarSesion() {
+  const correo = document.getElementById('correo').value;
+  const clave = document.getElementById('clave').value;
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: correo,
+    password: clave
+  });
+  
+  if (error) return alert('Error: ' + error.message);
+  usuarioActivo = data.user;
+  mostrarApp();
+  await cargarMovimientos();
+}
+
+// Registrarse
+async function registrarse() {
+  const correo = document.getElementById('correo').value;
+  const clave = document.getElementById('clave').value;
+  
+  if (clave.length < 6) {
+    return alert('La contraseña debe tener al menos 6 caracteres');
+  }
+  
+  const { data, error } = await supabase.auth.signUp({
+    email: correo,
+    password: clave
+  });
+  
+  if (error) return alert('Error: ' + error.message);
+  alert('✅ Cuenta creada con éxito. Ya puedes entrar con tus datos');
+}
+
+// Cerrar sesión
+async function cerrarSesion() {
+  await supabase.auth.signOut();
+  usuarioActivo = null;
+  document.getElementById('seccion-auth').style.display = 'block';
+  document.getElementById('seccion-datos').style.display = 'none';
+  document.getElementById('usuario-info').style.display = 'none';
+  document.getElementById('cerrar-sesion').style.display = 'none';
+  document.getElementById('correo').value = '';
+  document.getElementById('clave').value = '';
+}
+
+function mostrarApp() {
+  document.getElementById('seccion-auth').style.display = 'none';
+  document.getElementById('seccion-datos').style.display = 'block';
+  document.getElementById('usuario-info').style.display = 'block';
+  document.getElementById('cerrar-sesion').style.display = 'block';
+  document.getElementById('usuario-info').textContent = 'Conectado: ' + usuarioActivo.email;
+}
+
+// Cargar movimientos desde la nube
+async function cargarMovimientos() {
+  const { data, error } = await supabase
+    .from('finanzas')
+    .select('*')
+    .order('creado_en', { ascending: false });
+  
+  if (error) {
+    console.error(error);
+    return;
+  }
+  
+  movimientos = data || [];
+  actualizarVista();
+}
+
+// Agregar movimiento
+async function agregarMovimiento() {
+  const desc = document.getElementById('descripcion').value.trim();
+  const monto = parseFloat(document.getElementById('monto').value);
+  
+  if (!desc || isNaN(monto)) return alert('Completa todos los datos');
+  
+  const { data, error } = await supabase
+    .from('finanzas')
+    .insert([
+      {
+        descripcion: desc,
+        monto: monto,
+        usuario_id: usuarioActivo.id
+      }
+    ])
+    .select();
+  
+  if (error) return alert('Error al guardar: ' + error.message);
+  
+  document.getElementById('descripcion').value = '';
+  document.getElementById('monto').value = '';
+  
+  await cargarMovimientos();
+}
+
+// Eliminar
+async function eliminarMovimiento(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  
+  const { error } = await supabase
+    .from('finanzas')
+    .delete()
+    .eq('id', id);
+  
+  if (error) return alert('Error al eliminar');
+  
+  await cargarMovimientos();
+}
+
+function actualizarVista() {
+  // Saldo
+  const total = movimientos.reduce((sum, m) => sum + m.monto, 0);
+  document.getElementById('saldo').textContent = '$' + total.toFixed(2);
+  
+  // Lista
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+  movimientos.forEach(m => {
+    const div = document.createElement('div');
+    div.style.padding = '10px 0';
+    div.style.borderBottom = '1px solid #333';
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div>${m.descripcion}</div>
+          <div class="${m.monto >= 0 ? 'ingreso' : 'gasto'}">
+            ${m.monto >= 0 ? '+' : ''}$${m.monto.toFixed(2)}
+          </div>
         </div>
-        <button class="btn-mini" onclick="ejecutarPagoTarjeta()">Confirmar Pago</button>
-        <button class="btn-mini" onclick="ocultarPanelPago()">Cancelar</button>
-        <div id="msgPago" class="mensaje-aviso"></div>
-    </div>
-    <h2>Activos Pasivos (Inversiones Separadas)</h2>
-    <div class="contenedor-horizontal">
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">🏦 Fiducia</div><div class="saldo-tag" id="inv-fiducia">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelAjuste('fiducia','Fiducia')">Ajustar</button>
-        </div>
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">🪙 Cripto</div><div class="saldo-tag" id="inv-cripto">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelAjuste('cripto','Cripto')">Ajustar</button>
-        </div>
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">🍔 Acciones</div><div class="saldo-tag" id="inv-acciones">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelAjuste('acciones','Acciones')">Ajustar</button>
-        </div>
-        <div class="tarjeta-activa">
-            <div class="nombre-tag">📱 Uber Crédito</div><div class="saldo-tag" id="inv-uber">$0.00</div>
-            <button class="btn-mini" onclick="mostrarPanelAjuste('uber','Crédito Uber')">Ajustar</button>
-        </div>
-    </div>
-    <div id="panelAjusteInv" class="panel-accion oculto">
-        <h3 style="margin-bottom:10px;font-size:14px;">Ajustar Inversión</h3>
-        <input type="hidden" id="invClaveSel">
-        <input type="hidden" id="invNombreSel">
-        <div class="campo-grupo">
-            <label>Nuevo valor ($)</label>
-            <input type="number" step="0.01" id="nuevoValorInv" placeholder="0.00">
-        </div>
-        <button class="btn-mini" onclick="ejecutarAjusteInversion()">Guardar valor</button>
-        <button class="btn-mini" onclick="ocultarPanelAjuste()">Cancelar</button>
-        <div id="msgAjuste" class="mensaje-aviso"></div>
-    </div>
-    <div class="formulario-rapido">
-        <h3>⚡ Registrar Operación</h3>
-        <div class="campo-grupo">
-            <label>Tipo</label>
-            <select id="tipo-registro" onchange="adaptarFormulario()">
-                <option value="ingreso-privado">💼 Ingreso Privado</option>
-                <option value="ingreso-uber">🚗 Carrera Uber (Auditoría)</option>
-                <option value="egreso-operativo">🛠️ Gasto Operativo (Moto)</option>
-                <option value="egreso-comun">🏠 Gasto Común (Casa)</option>
-            </select>
-        </div>
-        <div class="campo-grupo" id="div-uber-opciones" style="display:none;">
-            <label>Tarifa real carrera ($)</label>
-            <input type="number" step="0.01" id="tarifa-real-uber" placeholder="0.00">
-            <div class="check-grupo" style="margin-top:8px;">
-                <input type="checkbox" id="chk-uber-adelantado">
-                <label for="chk-uber-adelantado">Cobro por adelantado</label>
-            </div>
-        </div>
-        <div class="campo-grupo"><label id="lbl-monto">Monto Cobrado/Pagado ($)</label><input type="number" id="monto-valor" placeholder="0.00" step="0.01"></div>
-        <div class="campo-grupo" id="div-propina"><label>Propina Efectivo Extra ($)</label><input type="number" id="monto-propina" value="0" step="0.01"></div>
-        <div class="campo-grupo">
-            <label>Método / Origen</label>
-            <select id="metodo-pago">
-                <option value="efectivo">💵 Efectivo en mano</option>
-                <option value="pichincha">🏦 Banco Pichincha</option>
-                <option value="guayaquil">🏦 Banco Guayaquil</option>
-                <option value="produbanco">🏦 Produbanco</option>
-                <option value="pacifico">🏦 Banco del Pacífico</option>
-                <option value="tc1" id="opt-tc1" style="display:none;">💳 Tarjeta 1</option>
-                <option value="tc2" id="opt-tc2" style="display:none;">💳 Tarjeta 2</option>
-            </select>
-        </div>
-        <button class="btn-guardar" onclick="procesarTransaccion()">Guardar Registro</button>
-        <button class="btn-mini" style="margin-top:10px;background:rgba(0,245,212,0.1);border-color:#00f5d4;color:#00f5d4" onclick="guardarCerrarDia()">💾 Guardar historial del día</button>
-        <button class="btn-mini" style="margin-top:6px;background:rgba(163,112,247,0.1);border-color:#a370f7;color:#a370f7" onclick="verResumenMes()">📊 Ver resumen del mes</button>
-        <button class="btn-borrar-todo" onclick="mostrarPanelConfirmarBorrado()">⚠️ Borrar Todo (reiniciar a 0)</button>
-    </div>
-    <div id="panelConfirmarBorrado" class="panel-accion oculto">
-        <h3 style="margin-bottom:10px;font-size:14px;">¿Borrar TODOS los datos?</h3>
-        <p style="font-size:12px;margin-bottom:10px;color:#ffd384;">Se reiniciarán saldos, inversiones y todo el historial. No hay recuperación.</p>
-        <button class="btn-mini" onclick="ejecutarBorrarTodo()">✅ Sí, borrar todo</button>
-        <button class="btn-mini" onclick="ocultarPanelConfirmarBorrado()">❌ Cancelar</button>
-        <div id="msgBorrado" class="mensaje-alerta"></div>
-    </div>
-    <h2>Gráfico de barras del día</h2>
-    <div class="grafico-caja" onclick="abrirResumenDia()">
-        <canvas id="graficoBarrasDia"></canvas>
-    </div>
-    <div class="pantalla-resumen-dia" id="pantallaResumenDia">
-        <button class="btn-volver" onclick="cerrarResumenDia()">← Volver</button>
-        <h2>Resumen del día</h2>
-        <div id="contenidoResumenDia"></div>
-    </div>
-    <div class="pantalla-resumen-mes" id="pantallaResumenMes">
-        <button class="btn-volver" onclick="cerrarResumenMes()">← Volver</button>
-        <h2>Resumen del mes</h2>
-        <div id="contenidoResumenMes"></div>
-    </div>
-    <div class="tabs-navegacion">
-        <button class="tab-boton activo" id="btn-tab-uber" onclick="cambiarTab('uber')">🚗 Uber</button>
-        <button class="tab-boton" id="btn-tab-privado" onclick="cambiarTab('privado')">💼 Privados</button>
-        <button class="tab-boton" id="btn-tab-gastos" onclick="cambiarTab('gastos')">🛠️ Gastos</button>
-        <button class="tab-boton" id="btn-tab-hist" onclick="cambiarTab('historial')">📅 Días guardados</button>
-    </div>
-    <div class="subpantalla-historial activa" id="historial-uber"></div>
-    <div class="subpantalla-historial" id="historial-privado"></div>
-    <div class="subpantalla-historial" id="historial-gastos"></div>
-    <div class="subpantalla-historial" id="historial-historial"></div>
-    <script>
-        let saldos = { efectivo: 0, pichincha: 0, guayaquil: 0, produbanco: 0, pacifico: 0 };
-        let deudas = { tc1: 0, tc2: 0 };
-        let inversiones = { fiducia: 0, cripto: 0, acciones: 0, uber: 0 };
-        let metricasDia = { ingresos: 0, operativos: 0, comunes: 0 };
-        let saldoInicialDia = null;
-        let registrosDelDia = [];
-        let tarjetaGastosTemporales = [];
-        let graficoBarras;
-        let metaAhorro = { nombre: "Mi Meta de Ahorro", valor: 0 };
-        let historialDias = JSON.parse(localStorage.getItem('historialDias')) || [];
-        let metaGuardada = localStorage.getItem('metaAhorro');
-        if (metaGuardada) metaAhorro = JSON.parse(metaGuardada);
-        function obtenerFechaHoyTexto() {
-            const hoy = new Date();
-            return `${hoy.getDate()}/${hoy.getMonth()+1}`;
-        }
-        function obtenerClaveMes() {
-            const hoy = new Date();
-            return `${hoy.getMonth()+1}-${hoy.getFullYear()}`;
-        }
-        function abrirEditarMeta() {
-            document.getElementById('input-nombre-meta').value = metaAhorro.nombre;
-            document.getElementById('input-valor-meta').value = metaAhorro.valor > 0 ? metaAhorro.valor : '';
-            document.getElementById('pantallaEditarMeta').classList.add('activa');
-        }
-        function cerrarEditarMeta() {
-            document.getElementById('pantallaEditarMeta').classList.remove('activa');
-        }
-        function guardarMeta() {
-            const nombre = document.getElementById('input-nombre-meta').value.trim() || "Mi Meta de Ahorro";
-            const valor = parseFloat(document.getElementById('input-valor-meta').value) || 0;
-            metaAhorro.nombre = nombre;
-            metaAhorro.valor = valor;
-            localStorage.setItem('metaAhorro', JSON.stringify(metaAhorro));
-            actualizarPantallas();
-            cerrarEditarMeta();
-        }
-        function actualizarGraficoBarras() {
-            if(graficoBarras) graficoBarras.destroy();
-            const ctx = document.getElementById('graficoBarrasDia').getContext('2d');
-            graficoBarras = new Chart(ctx, {
-                type:'bar',
-                data:{
-                    labels:['Ingresos','Gastos Op','Gastos Com'],
-                    datasets:[{
-                        data:[metricasDia.ingresos, metricasDia.operativos, metricasDia.comunes],
-                        backgroundColor:['#00f5d4','#ff9f1c','#ff5400']
-                    }]
-                },
-                options:{
-                    responsive:true,
-                    plugins:{legend:{display:false}},
-                    scales:{
-                        x:{ticks:{color:'#9499a7'}},
-                        y:{beginAtZero:true, ticks:{color:'#9499a7'}}
-                    }
-                }
-            });
-        }
-        function abrirResumenDia() {
-            const caja = document.getElementById('contenidoResumenDia');
-            if(saldoInicialDia === null) saldoInicialDia = { ...saldos, uberInv: inversiones.uber };
-            caja.innerHTML = `
-                <div class="item-historial">
-                    <div><b>Fecha:</b> ${obtenerFechaHoyTexto()}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Saldo inicial del día:</b><br>
-                    Efectivo: $${saldoInicialDia.efectivo.toFixed(2)}<br>
-                    Pichincha: $${saldoInicialDia.pichincha.toFixed(2)}<br>
-                    Guayaquil: $${saldoInicialDia.guayaquil.toFixed(2)}<br>
-                    Produbanco: $${saldoInicialDia.produbanco.toFixed(2)}<br>
-                    Pacífico: $${saldoInicialDia.pacifico.toFixed(2)}<br>
-                    Crédito Uber inicial: $${saldoInicialDia.uberInv.toFixed(2)}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Movimientos del día:</b><br>
-                    Ingresos totales: $${metricasDia.ingresos.toFixed(2)}<br>
-                    Gastos operativos: $${metricasDia.operativos.toFixed(2)}<br>
-                    Gastos comunes: $${metricasDia.comunes.toFixed(2)}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Saldo actual:</b><br>
-                    Efectivo: $${saldos.efectivo.toFixed(2)}<br>
-                    Pichincha: $${saldos.pichincha.toFixed(2)}<br>
-                    Guayaquil: $${saldos.guayaquil.toFixed(2)}<br>
-                    Produbanco: $${saldos.produbanco.toFixed(2)}<br>
-                    Pacífico: $${saldos.pacifico.toFixed(2)}<br>
-                    Crédito Uber actual: $${inversiones.uber.toFixed(2)}</div>
-                </div>
-            `;
-            document.getElementById('pantallaResumenDia').classList.add('activa');
-        }
-        function cerrarResumenDia() {
-            document.getElementById('pantallaResumenDia').classList.remove('activa');
-        }
-        function verResumenMes(){
-            const mesActual = obtenerClaveMes();
-            const diasMes = historialDias.filter(d=>d.claveMes===mesActual);
-            let ingMes=0, opMes=0, comMes=0;
-            diasMes.forEach(d=>{
-                ingMes += d.metricas.ingresos;
-                opMes += d.metricas.operativos;
-                comMes += d.metricas.comunes;
-            });
-            const cajaMes = document.getElementById('contenidoResumenMes');
-            cajaMes.innerHTML = `
-                <div class="item-historial">
-                    <div><b>Mes: ${mesActual}</b></div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Días guardados:</b> ${diasMes.length}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Ingresos totales del mes:</b> $${ingMes.toFixed(2)}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Gastos operativos totales:</b> $${opMes.toFixed(2)}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Gastos comunes totales:</b> $${comMes.toFixed(2)}</div>
-                </div>
-                <div class="item-historial">
-                    <div><b>Balance provisional mes:</b> $${(ingMes-opMes-comMes).toFixed(2)}</div>
-                </div>
-            `;
-            document.getElementById('pantallaResumenMes').classList.add('activa');
-        }
-        function cerrarResumenMes(){
-            document.getElementById('pantallaResumenMes').classList.remove('activa');
-        }
-        function guardarCerrarDia(){
-            if(saldoInicialDia === null) return alert("No hay movimientos para guardar");
-            const registroDia = {
-                fechaTexto: obtenerFechaHoyTexto(),
-                claveMes: obtenerClaveMes(),
-                saldoInicial: {...saldoInicialDia},
-                saldoFinal: {...saldos, uberInv: inversiones.uber},
-                metricas: {...metricasDia},
-                movimientos: [...registrosDelDia]
-            };
-            historialDias.push(registroDia);
-            localStorage.setItem('historialDias', JSON.stringify(historialDias));
-            metricasDia = { ingresos:0, operativos:0, comunes:0 };
-            saldoInicialDia = null;
-            registrosDelDia = [];
-            document.querySelectorAll('.subpantalla-historial').forEach(el=>el.innerHTML="");
-            actualizarPantallas();
-            actualizarGraficoBarras();
-            refrescarListaDiasGuardados();
-            alert("Día guardado, ya puedes empezar uno nuevo");
-        }
-        function refrescarListaDiasGuardados(){
-            const caja = document.getElementById('historial-historial');
-            caja.innerHTML = "";
-            historialDias.forEach((d,idx)=>{
-                const div = document.createElement('div');
-                div.className = "item-historial";
-                div.innerHTML = `<div><b>${d.fechaTexto} (${d.claveMes})</b><br>Ing:$${d.metricas.ingresos.toFixed(2)} Op:$${d.metricas.operativos.toFixed(2)} Com:$${d.metricas.comunes.toFixed(2)}</div>`;
-                caja.appendChild(div);
-            });
-        }
-        function actualizarPantallas() {
-            document.getElementById('banco-efectivo').innerText = `$${saldos.efectivo.toFixed(2)}`;
-            document.getElementById('banco-pichincha').innerText = `$${saldos.pichincha.toFixed(2)}`;
-            document.getElementById('banco-guayaquil').innerText = `$${saldos.guayaquil.toFixed(2)}`;
-            document.getElementById('banco-produbanco').innerText = `$${saldos.produbanco.toFixed(2)}`;
-            document.getElementById('banco-pacifico').innerText = `$${saldos.pacifico.toFixed(2)}`;
-            document.getElementById('txt-tc1').innerText = `$${deudas.tc1.toFixed(2)}`;
-            document.getElementById('txt-tc2').innerText = `$${deudas.tc2.toFixed(2)}`;
-            document.getElementById('inv-fiducia').innerText = `$${inversiones.fiducia.toFixed(2)}`;
-            document.getElementById('inv-cripto').innerText = `$${inversiones.cripto.toFixed(2)}`;
-            document.getElementById('inv-acciones').innerText = `$${inversiones.acciones.toFixed(2)}`;
-            document.getElementById('inv-uber').innerText = `$${inversiones.uber.toFixed(2)}`;
-            let totalFlujo = saldos.efectivo + saldos.pichincha + saldos.guayaquil + saldos.produbanco + saldos.pacifico;
-            document.getElementById('txt-patrimonio').innerText = `$${totalFlujo.toFixed(2)}`;
-            
-            document.getElementById('nombre-meta').innerText = metaAhorro.nombre;
-            document.getElementById('valor-meta').innerText = `$${metaAhorro.valor.toFixed(2)}`;
-            let porcentaje = metaAhorro.valor > 0 ? Math.max(0, Math.min((totalFlujo / metaAhorro.valor) * 100, 100)) : 0;
-            document.getElementById('barra-meta').style.width = `${porcentaje}%`;
-            let tarjetaUber = document.getElementById('inv-uber').parentElement;
-            if (inversiones.uber < 0) { tarjetaUber.style.borderTopColor = "#ff5400"; }
-            else { tarjetaUber.style.borderTopColor = "#00f5d4"; }
-        }
-        function cambiarTab(cat) {
-            document.querySelectorAll('.subpantalla-historial').forEach(el => el.classList.remove('activa'));
-            document.querySelectorAll('.tab-boton').forEach(el => el.classList.remove('activo'));
-            document.getElementById(`historial-${cat}`).classList.add('activa');
-            document.getElementById(`btn-tab-${cat}`).classList.add('activo');
-            if(cat === 'historial') refrescarListaDiasGuardados();
-        }
-        function adaptarFormulario() {
-            let tipo = document.getElementById('tipo-registro').value;
-            document.getElementById('div-uber-opciones').style.display = (tipo === 'ingreso-uber') ? 'block' : 'none';
-            document.getElementById('div-propina').style.display = (tipo.includes('egreso')) ? 'none' : 'block';
-            document.getElementById('lbl-monto').innerText = tipo.includes('egreso') ? "Monto Total Pagado ($)" : "Monto Cobrado ($)";
-            document.getElementById('opt-tc1').style.display = tipo.includes('egreso') ? 'block' : 'none';
-            document.getElementById('opt-tc2').style.display = tipo.includes('egreso') ? 'block' : 'none';
-            if (!tipo.includes('egreso') && document.getElementById('metodo-pago').value.includes('tc')) {
-                document.getElementById('metodo-pago').value = 'efectivo';
-            }
-        }
-        function procesarTransaccion() {
-            if(saldoInicialDia === null) saldoInicialDia = { ...saldos, uberInv: inversiones.uber };
-            let tipo = document.getElementById('tipo-registro').value;
-            let monto = parseFloat(document.getElementById('monto-valor').value) || 0;
-            let metodo = document.getElementById('metodo-pago').value;
-            let propina = parseFloat(document.getElementById('monto-propina').value) || 0;
-            let tarifaRealUber = parseFloat(document.getElementById('tarifa-real-uber').value) || 0;
-            let esAdelantadoUber = document.getElementById('chk-uber-adelantado').checked;
-            if (monto <= 0) return;
-            if (propina > 0) { saldos.efectivo += propina; metricasDia.ingresos += propina; }
-            registrosDelDia.push({tipo,monto,metodo,propina,tarifaRealUber,esAdelantadoUber});
-            let tabDestino = 'historial-gastos';
-            if (tipo === 'ingreso-privado') {
-                saldos[metodo] += monto;
-                metricasDia.ingresos += monto;
-                tabDestino = 'historial-privado';
-            } else if (tipo === 'ingreso-uber') {
-                if (esAdelantadoUber) {
-                    inversiones.uber += monto;
-                    metricasDia.ingresos += tarifaRealUber;
-                } else {
-                    saldos[metodo] += monto;
-                    let diferencia = monto - tarifaRealUber;
-                    if (diferencia > 0) {
-                        inversiones.uber -= diferencia;
-                    }
-                    metricasDia.ingresos += tarifaRealUber;
-                }
-                tabDestino = 'historial-uber';
-            } else if (tipo.includes('egreso')) {
-                if (metodo.includes('tc')) {
-                    deudas[metodo] += monto;
-                    tarjetaGastosTemporales.push({ tarjeta: metodo, monto: monto, categoria: tipo });
-                } else {
-                    saldos[metodo] -= monto;
-                    if (tipo.includes('operativo')) metricasDia.operativos += monto;
-                    if (tipo.includes('comun')) metricasDia.comunes += monto;
-                }
-            }
-            let div = document.createElement('div'); div.className = 'item-historial';
-            div.innerHTML = `<div><b>${tipo.toUpperCase()}</b><br><small>Vía: ${metodo.toUpperCase()}</small></div>
-            <button class="btn-eliminar" onclick="borrarMovimiento(this,'${tipo}',${monto},'${metodo}',${propina},${tarifaRealUber},${esAdelantadoUber})">Borrar</button>`;
-            document.getElementById(tabDestino).prepend(div);
-            cambiarTab(tipo === 'ingreso-uber' ? 'uber' : (tipo === 'ingreso-privado' ? 'privado' : 'gastos'));
-            document.getElementById('monto-valor').value = "";
-            document.getElementById('monto-propina').value = "0";
-            document.getElementById('tarifa-real-uber').value = "";
-            document.getElementById('chk-uber-adelantado').checked = false;
-            actualizarPantallas();
-            actualizarGraficoBarras();
-        }
-        function borrarMovimiento(btn, tipo, monto, metodo, propina, tarifaRealUber, esAdelantadoUber) {
-            if (propina > 0) { saldos.efectivo -= propina; metricasDia.ingresos -= propina; }
-            if (tipo === 'ingreso-privado') {
-                saldos[metodo] -= monto; metricasDia.ingresos -= monto;
-            } else if (tipo === 'ingreso-uber') {
-                if (esAdelantadoUber) {
-                    inversiones.uber -= monto;
-                    metricasDia.ingresos -= tarifaRealUber;
-                } else {
-                    saldos[metodo] -= monto;
-                    let diferencia = monto - tarifaRealUber;
-                    if (diferencia > 0) inversiones.uber += diferencia;
-                    metricasDia.ingresos -= tarifaRealUber;
-                }
-            } else if (tipo.includes('egreso')) {
-                if (metodo.includes('tc')) {
-                    deudas[metodo] -= monto;
-                    let idx = tarjetaGastosTemporales.findIndex(g => g.tarjeta === metodo && g.monto === monto && g.categoria === tipo);
-                    if (idx > -1) tarjetaGastosTemporales.splice(idx,1);
-                } else {
-                    saldos[metodo] += monto;
-                    if (tipo.includes('operativo')) metricasDia.operativos -= monto;
-                    if (tipo.includes('comun')) metricasDia.comunes -= monto;
-                }
-            }
-            btn.closest('.item-historial').remove();
-            actualizarPantallas();
-            actualizarGraficoBarras();
-        }
-        function mostrarPanelPago(tc) {
-            document.getElementById('tarjetaSeleccionada').value = tc;
-            document.getElementById('msgPago').textContent = "";
-            document.getElementById('panelPagoTarjeta').classList.remove('oculto');
-        }
-        function ocultarPanelPago() {
-            document.getElementById('panelPagoTarjeta').classList.add('oculto');
-        }
-        function ejecutarPagoTarjeta() {
-            let tc = document.getElementById('tarjetaSeleccionada').value;
-            let d = deudas[tc];
-            if (d <= 0) { document.getElementById('msgPago').textContent = "Sin deudas"; return; }
-            let bancoSel = document.getElementById('bancoPagoSelect').value;
-            if (saldos[bancoSel] < d) { document.getElementById('msgPago').textContent = "Saldo insuficiente"; return; }
-            saldos[bancoSel] -= d;
-            deudas[tc] = 0;
-            tarjetaGastosTemporales.forEach(g => {
-                if (g.tarjeta === tc) {
-                    if (g.categoria.includes('operativo')) metricasDia.operativos += g.monto;
-                    if (g.categoria.includes('comun')) metricasDia.comunes += g.monto;
-                }
-            });
-            tarjetaGastosTemporales = tarjetaGastosTemporales.filter(g => g.tarjeta !== tc);
-            document.getElementById('msgPago').textContent = "Tarjeta liquidada ✔";
-            actualizarPantallas();
-            actualizarGraficoBarras();
-        }
-        function mostrarPanelAjuste(clave, nombre) {
-            document.getElementById('invClaveSel').value = clave;
-            document.getElementById('invNombreSel').value = nombre;
-            document.getElementById('nuevoValorInv').value = inversiones[clave].toFixed(2);
-            document.getElementById('msgAjuste').textContent = "";
-            document.getElementById('panelAjusteInv').classList.remove('oculto');
-        }
-        function ocultarPanelAjuste() {
-            document.getElementById('panelAjusteInv').classList.add('oculto');
-        }
-        function ejecutarAjusteInversion() {
-            let clave = document.getElementById('invClaveSel').value;
-            let valTxt = document.getElementById('nuevoValorInv').value.trim();
-            let nuevoVal = parseFloat(valTxt);
-            if (isNaN(nuevoVal)) { document.getElementById('msgAjuste').textContent = "Ingresa número válido"; return; }
-            inversiones[clave] = nuevoVal;
-            document.getElementById('msgAjuste').textContent = "Valor guardado ✔";
-            actualizarPantallas();
-        }
-        function mostrarPanelConfirmarBorrado() {
-            document.getElementById('msgBorrado').textContent = "";
-            document.getElementById('panelConfirmarBorrado').classList.remove('oculto');
-        }
-        function ocultarPanelConfirmarBorrado() {
-            document.getElementById('panelConfirmarBorrado').classList.add('oculto');
-        }
-        function ejecutarBorrarTodo() {
-            saldos = { efectivo: 0, pichincha: 0, guayaquil: 0, produbanco: 0, pacifico: 0 };
-            deudas = { tc1: 0, tc2: 0 };
-            inversiones = { fiducia: 0, cripto: 0, acciones: 0, uber: 0 };
-            metricasDia = { ingresos: 0, operativos: 0, comunes: 0 };
-            saldoInicialDia = null;
-            registrosDelDia = [];
-            tarjetaGastosTemporales = [];
-            historialDias = [];
-            localStorage.removeItem('historialDias');
-            document.querySelectorAll('.subpantalla-historial').forEach(el => el.innerHTML = '');
-            actualizarPantallas();
-            actualizarGraficoBarras();
-            document.getElementById('msgBorrado').textContent = "Todos los datos reiniciados ✔";
-        }
-        actualizarPantallas();
-        actualizarGraficoBarras();
-        refrescarListaDiasGuardados();
-    </script>
+        <button class="eliminar" style="width:auto; padding:6px 12px;" onclick="eliminarMovimiento(${m.id})">✕</button>
+      </div>
+    `;
+    lista.appendChild(div);
+  });
+  
+  // Gráfica
+  const ingresos = movimientos.filter(m => m.monto > 0).reduce((s,m)=>s+m.monto,0);
+  const gastos = Math.abs(movimientos.filter(m => m.monto < 0).reduce((s,m)=>s+m.monto,0));
+  
+  if (window.miGrafica) window.miGrafica.destroy();
+  const ctx = document.getElementById('grafica').getContext('2d');
+  window.miGrafica = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Ingresos', 'Gastos'],
+      datasets: [{
+        data: [ingresos, gastos],
+        backgroundColor: ['#4ade80', '#f87171']
+      }]
+    }
+  });
+}
+
+// Iniciar
+verificarSesion();
+</script>
 </body>
 </html>
