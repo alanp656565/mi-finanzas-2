@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Centro Financiero Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,12 +17,30 @@
       max-width: 480px;
       margin: 0 auto;
     }
-    h1 { text-align: center; margin: 10px 0 20px; font-size: 28px; }
-    h2 { font-size: 15px; margin: 20px 0 10px; font-weight: 700; text-transform: uppercase; }
-    .card { background: #1a1b23; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    h1 {
+      text-align: center;
+      margin: 10px 0 20px;
+      font-size: 28px;
+    }
+    h2 {
+      font-size: 15px;
+      margin: 20px 0 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .card {
+      background: #1a1b23;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
     input, button {
-      width: 100%; padding: 12px; margin: 6px 0;
-      border: none; border-radius: 8px; font-size: 15px;
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
     }
     input { background: #2a2b36; color: #fff; }
     button { background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
@@ -38,6 +57,7 @@
 
   <h1>💰 Mis Finanzas</h1>
   
+  <!-- Sección de Inicio de Sesión -->
   <div class="card auth-section" id="seccion-auth">
     <h2>Iniciar Sesión / Registrarse</h2>
     <input type="email" id="correo" placeholder="Tu correo electrónico">
@@ -49,6 +69,7 @@
   <div class="datos-usuario" id="usuario-info" style="display:none;"></div>
   <button id="cerrar-sesion" onclick="cerrarSesion()" style="display:none; background: #4b5563;">Cerrar Sesión</button>
 
+  <!-- Sección de Datos -->
   <div id="seccion-datos" style="display:none;">
     <div class="card">
       <h2>Saldo Actual</h2>
@@ -58,7 +79,7 @@
     <div class="card">
       <h2>Agregar Movimiento</h2>
       <input type="text" id="descripcion" placeholder="Descripción">
-      <input type="number" id="monto" placeholder="Monto (+ ingreso / - gasto)" step="0.01">
+      <input type="number" id="monto" placeholder="Monto (positivo = ingreso, negativo = gasto)" step="0.01">
       <button onclick="agregarMovimiento()">Guardar</button>
     </div>
 
@@ -74,6 +95,7 @@
   </div>
 
 <script>
+// TUS CLAVES YA CONFIGURADAS ✅
 const SUPABASE_URL = "https://inlvymeimjjzqebwzdsd.supabase.co";
 const SUPABASE_CLAVE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubHZteWVpbWlqenFlYnd6ZHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MTYxOTMsImV4cCI6MjEwODM5MjE5M30.EJ8oEUp0IQx1vz7V4-69k_qWTQSiwd1i98XNgRULzOo";
 
@@ -81,28 +103,51 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE);
 let usuarioActivo = null;
 let movimientos = [];
 
+// Verificar sesión al cargar
 async function verificarSesion() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) { usuarioActivo = session.user; mostrarApp(); await cargarMovimientos(); }
+  if (session) {
+    usuarioActivo = session.user;
+    mostrarApp();
+    await cargarMovimientos();
+  }
 }
 
+// Iniciar sesión
 async function iniciarSesion() {
   const correo = document.getElementById('correo').value;
   const clave = document.getElementById('clave').value;
-  const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password: clave });
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: correo,
+    password: clave
+  });
+  
   if (error) return alert('Error: ' + error.message);
-  usuarioActivo = data.user; mostrarApp(); await cargarMovimientos();
+  usuarioActivo = data.user;
+  mostrarApp();
+  await cargarMovimientos();
 }
 
+// Registrarse
 async function registrarse() {
   const correo = document.getElementById('correo').value;
   const clave = document.getElementById('clave').value;
-  if (clave.length < 6) return alert('La contraseña debe tener al menos 6 caracteres');
-  const { data, error } = await supabase.auth.signUp({ email: correo, password: clave });
+  
+  if (clave.length < 6) {
+    return alert('La contraseña debe tener al menos 6 caracteres');
+  }
+  
+  const { data, error } = await supabase.auth.signUp({
+    email: correo,
+    password: clave
+  });
+  
   if (error) return alert('Error: ' + error.message);
-  alert('✅ Cuenta creada. Ya puedes entrar con tus datos');
+  alert('✅ Cuenta creada con éxito. Ya puedes entrar con tus datos');
 }
 
+// Cerrar sesión
 async function cerrarSesion() {
   await supabase.auth.signOut();
   usuarioActivo = null;
@@ -122,39 +167,68 @@ function mostrarApp() {
   document.getElementById('usuario-info').textContent = 'Conectado: ' + usuarioActivo.email;
 }
 
+// Cargar movimientos desde la nube
 async function cargarMovimientos() {
-  const { data, error } = await supabase.from('finanzas').select('*').order('creado_en', { ascending: false });
-  if (error) { console.error(error); return; }
+  const { data, error } = await supabase
+    .from('finanzas')
+    .select('*')
+    .order('creado_en', { ascending: false });
+  
+  if (error) {
+    console.error(error);
+    return;
+  }
+  
   movimientos = data || [];
   actualizarVista();
 }
 
+// Agregar movimiento
 async function agregarMovimiento() {
   const desc = document.getElementById('descripcion').value.trim();
   const monto = parseFloat(document.getElementById('monto').value);
+  
   if (!desc || isNaN(monto)) return alert('Completa todos los datos');
   
-  const { error } = await supabase.from('finanzas').insert([
-    { descripcion: desc, monto: monto, usuario_id: usuarioActivo.id }
-  ]);
+  const { data, error } = await supabase
+    .from('finanzas')
+    .insert([
+      {
+        descripcion: desc,
+        monto: monto,
+        usuario_id: usuarioActivo.id
+      }
+    ])
+    .select();
+  
   if (error) return alert('Error al guardar: ' + error.message);
   
   document.getElementById('descripcion').value = '';
   document.getElementById('monto').value = '';
+  
   await cargarMovimientos();
 }
 
+// Eliminar
 async function eliminarMovimiento(id) {
   if (!confirm('¿Eliminar este registro?')) return;
-  const { error } = await supabase.from('finanzas').delete().eq('id', id);
+  
+  const { error } = await supabase
+    .from('finanzas')
+    .delete()
+    .eq('id', id);
+  
   if (error) return alert('Error al eliminar');
+  
   await cargarMovimientos();
 }
 
 function actualizarVista() {
+  // Saldo
   const total = movimientos.reduce((sum, m) => sum + m.monto, 0);
   document.getElementById('saldo').textContent = '$' + total.toFixed(2);
   
+  // Lista
   const lista = document.getElementById('lista');
   lista.innerHTML = '';
   movimientos.forEach(m => {
@@ -175,6 +249,7 @@ function actualizarVista() {
     lista.appendChild(div);
   });
   
+  // Gráfica
   const ingresos = movimientos.filter(m => m.monto > 0).reduce((s,m)=>s+m.monto,0);
   const gastos = Math.abs(movimientos.filter(m => m.monto < 0).reduce((s,m)=>s+m.monto,0));
   
@@ -192,6 +267,7 @@ function actualizarVista() {
   });
 }
 
+// Iniciar
 verificarSesion();
 </script>
 </body>
