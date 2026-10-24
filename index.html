@@ -7,29 +7,19 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0d0e12;
-      color: #fff;
-      padding: 16px;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    h1 { text-align: center; margin: 10px 0 20px; font-size: 28px; }
-    h2 { font-size: 15px; margin: 20px 0 10px; font-weight: 700; text-transform: uppercase; }
-    .card { background: #1a1b23; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-    input, button {
-      width: 100%; padding: 12px; margin: 6px 0;
-      border: none; border-radius: 8px; font-size: 15px;
-    }
-    input { background: #2a2b36; color: #fff; }
-    button { background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
-    .verde { background: #16a34a; }
-    .rojo { background: #dc2626; }
-    .ingreso { color: #4ade80; }
-    .gasto { color: #f87171; }
-    .oculto { display: none !important; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,sans-serif;background:#0d0e12;color:#fff;padding:16px;max-width:480px;margin:0 auto}
+    h1{text-align:center;margin:10px 0 20px;font-size:28px}
+    h2{font-size:15px;margin:20px 0 10px;font-weight:700;text-transform:uppercase}
+    .card{background:#1a1b23;border-radius:12px;padding:16px;margin-bottom:12px}
+    input,button{width:100%;padding:12px;margin:6px 0;border:none;border-radius:8px;font-size:15px}
+    input{background:#2a2b36;color:#fff}
+    button{background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
+    .verde{background:#16a34a}
+    .rojo{background:#dc2626}
+    .ingreso{color:#4ade80}
+    .gasto{color:#f87171}
+    .oculto{display:none!important}
   </style>
 </head>
 <body>
@@ -37,35 +27,31 @@
 
   <div class="card" id="login">
     <h2 style="text-align:center">Iniciar Sesión / Registrarse</h2>
-    <input type="email" id="correo" placeholder="Tu correo electrónico">
-    <input type="password" id="clave" placeholder="Contraseña (mínimo 6 caracteres)">
+    <input type="email" id="correo" placeholder="Tu correo">
+    <input type="password" id="clave" placeholder="Contraseña (6+ caracteres)">
     <button class="verde" onclick="registrar()">Crear Cuenta</button>
     <button onclick="entrar()">Entrar</button>
   </div>
 
   <div id="app" class="oculto">
-    <div style="text-align:right; margin-bottom:10px;">
-      <span id="emailActivo" style="color:#94a3b8; font-size:14px;"></span>
-      <button class="rojo" onclick="salir()" style="width:auto; padding:8px 12px; margin-left:8px;">Salir</button>
+    <div style="text-align:right;margin-bottom:10px">
+      <span id="emailActivo" style="color:#94a3b8;font-size:14px"></span>
+      <button class="rojo" onclick="salir()" style="width:auto;padding:8px 12px;margin-left:8px">Salir</button>
     </div>
-
     <div class="card">
       <h2>Saldo Actual</h2>
-      <p style="font-size:36px; margin:10px 0;" id="saldo">$0.00</p>
+      <p style="font-size:36px;margin:10px 0" id="saldo">$0.00</p>
     </div>
-
     <div class="card">
       <h2>Agregar Movimiento</h2>
       <input type="text" id="descripcion" placeholder="Descripción">
-      <input type="number" id="monto" placeholder="Ej: 500 = ingreso / -50 = gasto" step="0.01">
-      <button onclick="guardarMovimiento()">Guardar</button>
+      <input type="number" id="monto" placeholder="Ej: 500 o -50" step="0.01">
+      <button onclick="guardar()">Guardar</button>
     </div>
-
     <div class="card">
       <h2>Gráfica</h2>
       <canvas id="grafica"></canvas>
     </div>
-
     <div class="card">
       <h2>Historial</h2>
       <div id="lista"></div>
@@ -83,119 +69,83 @@ let grafica = null;
 
 verificarSesion();
 
-async function verificarSesion() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    usuario = session.user;
-    mostrarApp();
-  }
+async function verificarSesion(){
+  const { data:{session} } = await supabase.auth.getSession();
+  if(session){usuario=session.user;mostrarApp()}
 }
 
-async function registrar() {
-  const correo = document.getElementById('correo').value;
-  const clave = document.getElementById('clave').value;
-  if (clave.length < 6) return alert('⚠️ La contraseña debe tener al menos 6 caracteres');
-  
-  const { error } = await supabase.auth.signUp({ email: correo, password: clave });
-  if (error) return alert('Error: ' + error.message);
-  alert('✅ Cuenta creada. Pulsa "Entrar" para acceder');
+async function registrar(){
+  const correo=document.getElementById('correo').value;
+  const clave=document.getElementById('clave').value;
+  if(clave.length<6)return alert('⚠️ Mínimo 6 caracteres');
+  const {error}=await supabase.auth.signUp({email,password:clave});
+  if(error)return alert('Error: '+error.message);
+  alert('✅ Cuenta creada. Pulsa Entrar');
 }
 
-async function entrar() {
-  const correo = document.getElementById('correo').value;
-  const clave = document.getElementById('clave').value;
-  
-  const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password: clave });
-  if (error) return alert('Error: ' + error.message);
-  
-  usuario = data.user;
-  mostrarApp();
+async function entrar(){
+  const correo=document.getElementById('correo').value;
+  const clave=document.getElementById('clave').value;
+  const {data,error}=await supabase.auth.signInWithPassword({email,password:clave});
+  if(error)return alert('Error: '+error.message);
+  usuario=data.user;mostrarApp();
 }
 
-async function salir() {
+async function salir(){
   await supabase.auth.signOut();
-  usuario = null;
+  usuario=null;
   document.getElementById('login').classList.remove('oculto');
   document.getElementById('app').classList.add('oculto');
-  document.getElementById('correo').value = '';
-  document.getElementById('clave').value = '';
+  document.getElementById('correo').value='';
+  document.getElementById('clave').value='';
 }
 
-function mostrarApp() {
+function mostrarApp(){
   document.getElementById('login').classList.add('oculto');
   document.getElementById('app').classList.remove('oculto');
-  document.getElementById('emailActivo').textContent = usuario.email;
-  cargarMovimientos();
+  document.getElementById('emailActivo').textContent=usuario.email;
+  cargar();
 }
 
-async function cargarMovimientos() {
-  const { data, error } = await supabase
-    .from('finanzas')
-    .select('*')
-    .order('creado_en', { ascending: false });
-  
-  if (error) return console.error(error);
-  const lista = data || [];
+async function cargar(){
+  const {data,error}=await supabase.from('finanzas').select('*').order('creado_en',{ascending:false});
+  if(error)return console.error(error);
+  const lista=data||[];
 
-  const total = lista.reduce((s, m) => s + m.monto, 0);
-  document.getElementById('saldo').textContent = '$' + total.toFixed(2);
+  const total=lista.reduce((s,m)=>s+m.monto,0);
+  document.getElementById('saldo').textContent='$'+total.toFixed(2);
 
-  const contenedor = document.getElementById('lista');
-  contenedor.innerHTML = '';
-  lista.forEach(m => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #333;';
-    div.innerHTML = `
-      <div>
-        <div>${m.descripcion}</div>
-        <div class="${m.monto >= 0 ? 'ingreso' : 'gasto'}">
-          ${m.monto >= 0 ? '+' : ''}$${m.monto.toFixed(2)}
-        </div>
-      </div>
-      <button class="rojo" onclick="borrar(${m.id})" style="width:auto; padding:6px 12px;">✕</button>
-    `;
-    contenedor.appendChild(div);
+  const cont=document.getElementById('lista');
+  cont.innerHTML='';
+  lista.forEach(m=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333';
+    div.innerHTML=`<div><div>${m.descripcion}</div><div class="${m.monto>=0?'ingreso':'gasto'}">${m.monto>=0?'+':''}$${m.monto.toFixed(2)}</div></div><button class="rojo" onclick="borrar(${m.id})" style="width:auto;padding:6px 12px">✕</button>`;
+    cont.appendChild(div);
   });
 
-  const ingresos = lista.filter(m => m.monto > 0).reduce((s, m) => s + m.monto, 0);
-  const gastos = Math.abs(lista.filter(m => m.monto < 0).reduce((s, m) => s + m.monto, 0));
-  
-  if (grafica) grafica.destroy();
-  grafica = new Chart(document.getElementById('grafica'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Ingresos', 'Gastos'],
-      datasets: [{
-        data: [ingresos, gastos],
-        backgroundColor: ['#4ade80', '#f87171']
-      }]
-    }
-  });
+  const ingresos=lista.filter(m=>m.monto>0).reduce((s,m)=>s+m.monto,0);
+  const gastos=Math.abs(lista.filter(m=>m.monto<0).reduce((s,m)=>s+m.monto,0));
+  if(grafica)grafica.destroy();
+  grafica=new Chart(document.getElementById('grafica'),{type:'doughnut',data:{labels:['Ingresos','Gastos'],datasets:[{data:[ingresos,gastos],backgroundColor:['#4ade80','#f87171']}]}});
 }
 
-async function guardarMovimiento() {
-  const desc = document.getElementById('descripcion').value.trim();
-  const monto = parseFloat(document.getElementById('monto').value);
-  if (!desc || isNaN(monto)) return alert('⚠️ Completa todos los campos');
-
-  const { error } = await supabase.from('finanzas').insert([{
-    descripcion: desc,
-    monto: monto,
-    usuario_id: usuario.id
-  }]);
-
-  if (error) return alert('Error: ' + error.message);
-  
-  document.getElementById('descripcion').value = '';
-  document.getElementById('monto').value = '';
-  cargarMovimientos();
+async function guardar(){
+  const desc=document.getElementById('descripcion').value.trim();
+  const monto=parseFloat(document.getElementById('monto').value);
+  if(!desc||isNaN(monto))return alert('⚠️ Completa todos los campos');
+  const {error}=await supabase.from('finanzas').insert([{descripcion:desc,monto:monto,usuario_id:usuario.id}]);
+  if(error)return alert('Error: '+error.message);
+  document.getElementById('descripcion').value='';
+  document.getElementById('monto').value='';
+  cargar();
 }
 
-async function borrar(id) {
-  if (!confirm('¿Eliminar este registro?')) return;
-  const { error } = await supabase.from('finanzas').delete().eq('id', id);
-  if (error) return alert('Error: ' + error.message);
-  cargarMovimientos();
+async function borrar(id){
+  if(!confirm('¿Eliminar?'))return;
+  const {error}=await supabase.from('finanzas').delete().eq('id',id);
+  if(error)return alert('Error: '+error.message);
+  cargar();
 }
 </script>
 </body>
